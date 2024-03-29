@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#60ce65</color>
+    <color name="colorPrimaryDark">#132914</color>
+    <color name="colorAccent">#FF000000</color>
+
+    <color name="back_color">#00f0f0</color>
+    <color name="fore_color">#d3992b</color>
+    <color name="yellow_eca537">#eca537</color>
+    <color name="black_color">#000000</color>
+    <color name="black_color_222222">#222222</color>
+
+    <color name="first_progress_color">#F8EDED</color>
+    <color name="second_progress_color">#EC918F</color>
+</resources>

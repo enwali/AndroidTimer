@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--font color-->
+    <color name="font_black">#333333</color>
+    <color name="font_blue">#0076ff</color>
+</resources>
