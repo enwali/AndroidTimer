@@ -6,9 +6,12 @@ import android.os.CountDownTimer;
 import com.wheelpicker.widget.PickString;
 import com.wp.demo.base.MyApplication;
 
+import java.util.UUID;
+
 
 public class TimeTextBean implements PickString {
 
+    private String uniqueStringID;
     private long time;
 
     private long countdown;
@@ -56,6 +59,18 @@ public class TimeTextBean implements PickString {
     public TimeTextBean(long time) {
         this.time = time * 1000;
         this.countdown = time * 1000;
+        // 生成唯一的 UUID
+        UUID uniqueID = UUID.randomUUID();
+        // 将 UUID 转换为字符串形式
+        uniqueStringID= uniqueID.toString();
+    }
+
+    public String getUniqueStringID() {
+        return uniqueStringID;
+    }
+
+    public void setUniqueStringID(String uniqueStringID) {
+        this.uniqueStringID = uniqueStringID;
     }
 
     public long getCountdown() {

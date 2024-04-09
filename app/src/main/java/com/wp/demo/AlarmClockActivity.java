@@ -5,11 +5,11 @@ import static com.wheelpicker.PickOption.getPickDefaultOptionBuilder;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -17,6 +17,7 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,10 +35,12 @@ import com.wp.demo.utils.PlayUtils;
 import com.wp.demo.utils.SpModel;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class AlarmClockActivity extends Activity {
 
+    public final String TAG = getClass().getName();
     Context mContext;
     private RecyclerView mRvAlarm;
     private TextView mTvAddTime;
@@ -80,6 +83,7 @@ public class AlarmClockActivity extends Activity {
                 long time = hour * 60 * 60 + seed * 60 + second;
                 if (time != 0) {
                     mProgressData.add(0, new TimeTextBean(time));
+                    mLlAllCtrl.setVisibility(View.VISIBLE);
                     SpModel.putTimeList(mProgressData);
                     mAdapter.notifyDataSetChanged();
                 }
@@ -94,8 +98,14 @@ public class AlarmClockActivity extends Activity {
         findViewById(R.id.tv_clear_all).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                for (int i = 0; i < mProgressData.size(); i++) {
+                    TimeTextBean bean = mProgressData.get(i);
+                    bean.getTimer().cancel();
+                    PlayUtils.INSTANCE.stopRing();
+                }
                 mProgressData.clear();
                 SpModel.putTimeList(mProgressData);
+                mLlAllCtrl.setVisibility(View.INVISIBLE);
                 mAdapter.notifyDataSetChanged();
             }
         });
@@ -173,6 +183,15 @@ public class AlarmClockActivity extends Activity {
             public void onItemChildClick(BaseQuickAdapter adapter, View view, int position) {
                 TimeTextBean bean = mProgressData.get(position);
                 switch (view.getId()) {
+                    case R.id.iv_reset:
+                        bean.setOpenRing(true);
+                        bean.setCountdown(bean.getTime());
+                        setDownTimer(bean);
+                        bean.setStatus(TimeStatus.onReady);
+                        if (PlayUtils.INSTANCE.isPlaying()) {
+                            PlayUtils.INSTANCE.stopRing();
+                        }
+                        break;
                     case R.id.iv_ring:
                         if (PlayUtils.INSTANCE.isPlaying()) {
                             PlayUtils.INSTANCE.stopRing();
@@ -224,25 +243,39 @@ public class AlarmClockActivity extends Activity {
     }
 
     private void setDownTimer(final TimeTextBean textBean) {
-        long time = textBean.getCountdown() - 1000;
+        textBean.cancel();
+        textBean.setTimer(null);
+        long time = textBean.getCountdown();
         CountDownTimer timer = new CountDownTimer(time, 1000) {
             @Override
             public void onTick(long l) {
-                Log.i("AlarmClockActivity", "onTick():" + l);
+                Log.i(TAG, "onTick: " + l);
                 textBean.setCountdown(l);
+                notifyProgress(textBean);
             }
 
             @Override
             public void onFinish() {
-                Log.i("AlarmClockActivity", "finish()");
                 textBean.setCountdown(0);
                 textBean.setStatus(TimeStatus.onEnd);
                 if (textBean.isOpenRing()) {
                     PlayUtils.INSTANCE.startRing();
                 }
+                mAdapter.notifyDataSetChanged();
             }
         };
         textBean.setTimer(timer);
+    }
+
+    private void notifyProgress(TimeTextBean textBean) {
+        for (int i = 0; i < mProgressData.size(); i++) {
+            Log.i(TAG, i + "  mProgressData UUID: " + mProgressData.get(i).getUniqueStringID() + "    textBean UUID: " + textBean.getUniqueStringID());
+            if (mProgressData.get(i).getUniqueStringID().equals(textBean.getUniqueStringID())) {
+                Log.e(TAG, i + " textBean Countdown: " + textBean.getCountdown());
+                mAdapter.notifyItemChanged(i, "notifyProgress");
+                return;
+            }
+        }
     }
 
     private Handler mHandler;
@@ -250,7 +283,6 @@ public class AlarmClockActivity extends Activity {
     Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            Log.i("AlarmClockActivity", "updateUI():");
             updateUI();
             mHandler.postDelayed(this, 1000);
         }
@@ -264,8 +296,6 @@ public class AlarmClockActivity extends Activity {
         mHandler.removeCallbacks(runnable);
     }
 
-    List<TimeTextBean> mOldProgressData = new ArrayList<>();
-
     private void updateUI() {
         if (mAdapter != null) {
             mAdapter.setNewData(mProgressData);
@@ -277,6 +307,9 @@ public class AlarmClockActivity extends Activity {
         super.onDestroy();
         // 在Activity销毁时停止定时任务，防止内存泄漏
         stopRepeatingTask();
+        for (TimeTextBean bean : mProgressData) {
+            bean.cancel();
+        }
         SpModel.putTimeList(mProgressData);
         PlayUtils.INSTANCE.stopRing();
     }

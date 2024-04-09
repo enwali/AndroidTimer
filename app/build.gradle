@@ -4,19 +4,41 @@ android {
     compileSdkVersion 29
     buildToolsVersion "28.0.3"
     defaultConfig {
-        applicationId "com.wp.demo"
+        applicationId "com.enwali.timer"
         minSdkVersion 19
         targetSdkVersion 29
-        versionCode 1
-        versionName "1.1.2"
+        versionCode 3
+        versionName "1.1.4"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+
+        manifestPlaceholders = [
+                JPUSH_PKGNAME : applicationId,
+                JPUSH_APPKEY : "85e4ed8dba83522fbf8156d9", //JPush 上注册的包名对应的 Appkey.
+                JPUSH_CHANNEL : "developer-default", //暂时填写默认值即可.
+        ]
     }
+    // 定义编译生成的apk名格式
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def newName = "${getVersionName(versionName)}.apk"
+            output.outputFileName newName
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+}
+
+
+def static getVersionName(String version) {
+    String appName = "Timer"
+    String today = new Date().format("yyyyMMdd")
+    String versionName = appName + "_V" + version + "_" + today
+    return versionName
 }
 
 dependencies {
@@ -31,4 +53,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
 
     implementation project(':library')
+
+
+    implementation 'cn.jiguang.sdk:jcore:2.7.2'  // 此处以JCore 2.7.2 版本为例。
+    implementation 'cn.jiguang.sdk:jpush:4.0.0'  // 此处以JPush 4.0.0 版本为例
 }

@@ -1,6 +1,7 @@
 package com.wp.demo.adapter;
 
 import android.annotation.SuppressLint;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -17,15 +18,46 @@ import com.wp.demo.view.DefineProgressView;
 import java.util.List;
 
 public class TimerAdapter extends BaseQuickAdapter<TimeTextBean, BaseViewHolder> {
+
+    List<TimeTextBean> mDataList;
+
     public TimerAdapter(@Nullable List<TimeTextBean> data) {
         super(R.layout.item_alarm, data);
+        mDataList = data;
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull BaseViewHolder holder, int position, @NonNull List<Object> payloads) {
+
+        if (payloads.isEmpty()) {
+            onBindViewHolder(holder, position);
+        } else {
+            String payload = payloads.get(0).toString();
+            if ("notifyProgress".equals(payload)) {
+                TimeTextBean item = mDataList.get(position);
+                DefineProgressView progressView = holder.getView(R.id.dv_progress);
+                long time = item.getTime();
+                long countdown = item.getCountdown();
+                long progress = 100 - (countdown * 100) / time;
+                if (countdown == 0) {
+                    progress = 100;
+                }
+                Log.e(TAG, position + " textBean Countdown: " + countdown + "    progress:" + progress);
+                progressView.resetLevelProgress((int) progress);
+                holder.setText(R.id.tv_countdown, formatTime(countdown));
+            }
+        }
     }
 
     @Override
     protected void convert(@NonNull BaseViewHolder helper, final TimeTextBean item) {
+
+        Log.i(TAG, "convert ");
+
         helper.setText(R.id.tv_initial_time, formatTime(item.getTime()));
         helper.setText(R.id.tv_countdown, formatTime(item.getCountdown()));
         DefineProgressView progressView = helper.getView(R.id.dv_progress);
+        helper.addOnClickListener(R.id.iv_reset);
         helper.addOnClickListener(R.id.iv_ring);
         helper.addOnClickListener(R.id.tv_delete);
         helper.addOnClickListener(R.id.tv_ctrl);
